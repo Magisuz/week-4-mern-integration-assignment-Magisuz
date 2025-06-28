@@ -41,10 +41,13 @@ api.interceptors.response.use(
 // Post API services
 export const postService = {
   // Get all posts with optional pagination and filters
-  getAllPosts: async (page = 1, limit = 10, category = null) => {
+  getAllPosts: async (page = 1, limit = 10, category = null, search = null) => {
     let url = `/posts?page=${page}&limit=${limit}`;
     if (category) {
       url += `&category=${category}`;
+    }
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
     }
     const response = await api.get(url);
     return response.data;
@@ -58,13 +61,17 @@ export const postService = {
 
   // Create a new post
   createPost: async (postData) => {
-    const response = await api.post('/posts', postData);
+    // If postData is FormData, remove Content-Type header to let browser set it
+    const config = postData instanceof FormData ? { headers: { 'Content-Type': undefined } } : {};
+    const response = await api.post('/posts', postData, config);
     return response.data;
   },
 
   // Update an existing post
   updatePost: async (id, postData) => {
-    const response = await api.put(`/posts/${id}`, postData);
+    // If postData is FormData, remove Content-Type header to let browser set it
+    const config = postData instanceof FormData ? { headers: { 'Content-Type': undefined } } : {};
+    const response = await api.put(`/posts/${id}`, postData, config);
     return response.data;
   },
 
@@ -82,7 +89,7 @@ export const postService = {
 
   // Search posts
   searchPosts: async (query) => {
-    const response = await api.get(`/posts/search?q=${query}`);
+    const response = await api.get(`/posts?search=${encodeURIComponent(query)}`);
     return response.data;
   },
 };
@@ -130,6 +137,21 @@ export const authService = {
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
+  },
+
+  // Update user profile
+  updateProfile: async (profileData) => {
+    const response = await api.put('/auth/me', profileData);
+    if (response.data.success) {
+      localStorage.setItem('user', JSON.stringify(response.data.data));
+    }
+    return response.data;
+  },
+
+  // Change password
+  changePassword: async (passwordData) => {
+    const response = await api.put('/auth/password', passwordData);
+    return response.data;
   },
 };
 

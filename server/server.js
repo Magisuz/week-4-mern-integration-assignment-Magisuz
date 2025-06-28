@@ -12,6 +12,9 @@ const postRoutes = require('./routes/posts');
 const categoryRoutes = require('./routes/categories');
 const authRoutes = require('./routes/auth');
 
+// Import upload error handling
+const { handleUploadError } = require('./middleware/upload');
+
 // Load environment variables
 dotenv.config();
 
@@ -45,6 +48,9 @@ app.get('/', (req, res) => {
   res.send('MERN Blog API is running');
 });
 
+// Upload error handling middleware
+app.use(handleUploadError);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -56,7 +62,10 @@ app.use((err, req, res, next) => {
 
 // Connect to MongoDB and start server
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => {
